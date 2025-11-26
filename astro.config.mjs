@@ -65,5 +65,13 @@ export default defineConfig({
       process.env.OUTPUT === 'vercel' && disableBlocks(),
       process.env.OUTPUT === 'netlify' && disableBlocks(),
     ],
+    // Prevent Vite/Rollup from trying to bundle server-only Gemini client
+    build: {
+      rollupOptions: {
+        external: [
+          '@google/genai',
+        ],
+      },
+    },
   },
 })
