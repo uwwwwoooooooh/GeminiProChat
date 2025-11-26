@@ -2,13 +2,13 @@ import { GoogleGenerativeAI } from '@fuyun/generative-ai'
 
 const apiKey = (import.meta.env.GEMINI_API_KEY)
 const apiBaseUrl = (import.meta.env.API_BASE_URL)?.trim().replace(/\/$/, '')
-const modelName = (import.meta.env.GEMINI_MODEL_NAME) || 'gemini-2.5-flash'
+const defaultModelName = (import.meta.env.GEMINI_MODEL_NAME) || 'gemini-flash-latest'
 
 const genAI = apiBaseUrl
   ? new GoogleGenerativeAI(apiKey, apiBaseUrl)
   : new GoogleGenerativeAI(apiKey)
 
-export const startChatAndSendMessageStream = async(history: ChatMessage[], newMessage: string) => {
+export const startChatAndSendMessageStream = async(history: ChatMessage[], newMessage: string, modelName: string = defaultModelName) => {
   const model = genAI.getGenerativeModel({ model: modelName })
 
   const chat = model.startChat({

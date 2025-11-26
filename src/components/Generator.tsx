@@ -6,6 +6,7 @@ import IconX from './icons/X'
 import Picture from './icons/Picture'
 import MessageItem from './MessageItem'
 import ErrorMessageItem from './ErrorMessageItem'
+import ModelSelector from './ModelSelector'
 import type { ChatMessage, ErrorMessage } from '@/types'
 
 export default () => {
@@ -17,6 +18,7 @@ export default () => {
   const [controller, setController] = createSignal<AbortController>(null)
   const [isStick, setStick] = createSignal(false)
   const [showComingSoon, setShowComingSoon] = createSignal(false)
+  const [currentModel, setCurrentModel] = createSignal('gemini-flash-latest')
   const maxHistoryMessages = parseInt(import.meta.env.PUBLIC_MAX_HISTORY_MESSAGES || '99')
 
   createEffect(() => (isStick() && smoothToBottom()))
@@ -107,6 +109,7 @@ export default () => {
           messages: convertReqMsgList(requestMessageList),
           time: timestamp,
           pass: storagePassword,
+          model: currentModel(),
           sign: await generateSignature({
             t: timestamp,
             m: requestMessageList?.[requestMessageList.length - 1]?.parts[0]?.text || '',
@@ -228,7 +231,7 @@ export default () => {
         </div>
       </Show>
 
-      <Index each={messageList()}>
+      <ModelSelector currentModel={currentModel} setCurrentModel={setCurrentModel} />
         {(message, index) => (
           <MessageItem
             role={message().role}
