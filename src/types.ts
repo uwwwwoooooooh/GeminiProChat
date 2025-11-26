@@ -3,7 +3,9 @@ export interface ChatPart {
 }
 
 export interface ChatMessage {
-  role: 'model' | 'user'
+  // role may be 'user' for the user, 'assistant' for UI assistant messages,
+  // and 'model' for messages sent to the API. Include 'system' for system role.
+  role: 'model' | 'user' | 'assistant' | 'system'
   parts: ChatPart[]
 }
 
