@@ -7,9 +7,9 @@ interface Props {
 }
 
 const AVAILABLE_MODELS = [
-  { id: 'gemini-3-pro-preview', label: 'Gemini 3 Pro Preview' },
-  { id: 'gemini-3-pro-image-preview', label: 'Gemini 3 Pro Image Preview' },
-  { id: 'gemini-flash-latest', label: 'Gemini Flash Latest' },
+  { id: 'gemini-3-pro-preview', label: 'Gemini 3 Pro' },
+  { id: 'gemini-3-pro-image-preview', label: 'Nano Banana' },
+  { id: 'gemini-flash-latest', label: 'Flash' },
 ]
 
 export default (props: Props) => {

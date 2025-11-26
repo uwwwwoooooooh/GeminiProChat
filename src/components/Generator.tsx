@@ -232,8 +232,6 @@ export default () => {
       </Show>
 
       <ModelSelector currentModel={currentModel} setCurrentModel={setCurrentModel} />
-
-      <Index each={messageList()}>
         {(message, index) => (
           <MessageItem
             role={message().role}
