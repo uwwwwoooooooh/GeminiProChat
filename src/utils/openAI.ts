@@ -20,25 +20,7 @@ function makeStreamFromString(text: string) {
   })
 }
 
-async function tryUseFuyunShape(history: ChatMessage[], newMessage: string, modelName: string) {
-  // older client shape: genAI.getGenerativeModel(...).startChat().sendMessageStream(...)
-  if (typeof (genAI as any).getGenerativeModel === 'function') {
-    const model = (genAI as any).getGenerativeModel({ model: modelName })
-    if (model && typeof model.startChat === 'function') {
-      const chat = model.startChat({
-        history: history.map(msg => ({
-          role: msg.role,
-          parts: msg.parts.map(p => p.text).join(''),
-        })),
-        generationConfig: { maxOutputTokens: 8000 },
-      })
-      if (typeof chat.sendMessageStream === 'function') {
-        return await chat.sendMessageStream(newMessage)
-      }
-    }
-  }
-  return null
-}
+// Legacy "fuyun" adapter removed — only modern google genai shapes are supported now.
 
 async function tryUseGoogleGenAIShape(history: ChatMessage[], newMessage: string, modelName: string) {
   // new google genai client shape: genAI.models.generateContent or genAI.models.generate
@@ -90,58 +72,16 @@ export const startChatAndSendMessageStream = async(
   newMessage: string,
   modelName: string = GEMINI_MODEL_NAME,
 ) => {
-  // Try older fuyun-style client first
-  try {
-    const maybe = await tryUseFuyunShape(history, newMessage, modelName)
-    if (maybe) {
-      // If the returned object has a stream, adapt it to a ReadableStream
-      if (maybe.stream && typeof maybe.stream[Symbol.asyncIterator] === 'function') {
-        const result = maybe
-        return new ReadableStream({
-          async start(controller) {
-            const encoder = new TextEncoder()
-            for await (const chunk of result.stream) {
-              let text = ''
-              try {
-                if (typeof chunk.text === 'function') text = await chunk.text()
-                else if (typeof chunk === 'string') text = chunk
-                else text = String(chunk)
-              } catch (e) {
-                text = String(chunk)
-              }
-              controller.enqueue(encoder.encode(text))
-            }
-            controller.close()
-          },
-        })
-      }
-
-      // If maybe is a plain string or object with text, return stream
-      if (typeof maybe === 'string') return makeStreamFromString(maybe)
-      if (maybe.outputText) return makeStreamFromString(maybe.outputText)
-      if (maybe.text) return makeStreamFromString(maybe.text)
-    }
-  } catch (e) {
-    // fallthrough to other shapes
-    console.warn('tryUseFuyunShape failed:', e)
-  }
-
-  // Try google genai shape
+  // Only support the modern Google GenAI client shapes
   try {
     const res = await tryUseGoogleGenAIShape(history, newMessage, modelName)
     if (res) {
-      // Attempt to extract text from common response shapes
-      //  - res.outputText
-      //  - res.output[0].content[0].text
-      //  - res.candidates[0].content[0].text
-      //  - res.result?.output_text
       if (typeof res === 'string') return makeStreamFromString(res)
       if (res.outputText) return makeStreamFromString(res.outputText)
       if (res.result && res.result.output_text) return makeStreamFromString(res.result.output_text)
       if (Array.isArray(res.output) && res.output.length > 0) {
         const first = res.output[0]
         if (first && first.content) {
-          // content can be array
           if (Array.isArray(first.content) && first.content[0] && first.content[0].text) return makeStreamFromString(first.content[0].text)
           if (first.text) return makeStreamFromString(first.text)
         }
@@ -154,7 +94,6 @@ export const startChatAndSendMessageStream = async(
         }
       }
 
-      // As a last resort, JSON stringify
       return makeStreamFromString(JSON.stringify(res))
     }
   } catch (e) {
